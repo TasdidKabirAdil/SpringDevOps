@@ -1,0 +1,36 @@
+pipeline {
+    agent any
+    tools {
+        maven "MAVEN"
+    }
+
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('DOCKERHUB_CREDENTIALS')
+    }
+
+    stages {
+        stage("Build Maven"){
+            steps {
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/TasdidKabirAdil/SpringDevOps']])
+                bat 'mvn clean install'
+            }
+        }
+
+        stage("Build Docker Image"){
+            steps {
+                script {
+                   bat 'docker build -t tasdidkabir/spring-devops .'
+                }
+            }
+        }
+
+        stage("Push Docker Image to Docker Hub"){
+            steps {
+                script {
+                    bat 'echo %DOCKERHUB_CREDENTIALS_PSW% | docker login -u %DOCKERHUB_CREDENTIALS_USR% --password-stdin'
+                    bat 'docker push tasdidkabir/spring-devops'
+                }
+            }
+        }
+    }
+}
